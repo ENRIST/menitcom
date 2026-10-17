@@ -1,14 +1,16 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:get_thumbnail_video/index.dart';
-import 'package:get_thumbnail_video/video_thumbnail.dart';
+import 'package:video_player/video_player.dart';
 
+// Import halaman-halaman tab lainnya
+import 'rekomendasi_page.dart';
+import 'populer_page.dart';
+import 'lifestyle_page.dart';
+import 'komentar_page.dart';
 import 'story_detail_page.dart';
 
 class StoryModel {
   final String title;
-  final String videoPath; // Path ke file MP4 lokal
+  final String videoPath;
   final String time;
 
   StoryModel({
@@ -25,8 +27,113 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  // MASTER DATA 18 VIDEO LOKAL ASSETS (Tanpa thumbnail URL internet)
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF17191D),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF17191D),
+        elevation: 0,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.cast_connected_outlined,
+                color: Colors.white,
+                size: 26,
+              ),
+              onPressed: () {},
+            ),
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                    text: 'menit',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  TextSpan(
+                    text: 'com',
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ],
+              ),
+            ),
+            const CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.white30,
+              child: Icon(Icons.person, color: Colors.white70, size: 20),
+            ),
+          ],
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          padding: EdgeInsets.zero,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.grey[400],
+          labelStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.normal,
+          ),
+          tabs: const [
+            Tab(text: 'Terupdate'),
+            Tab(text: 'Rekomendasi'),
+            Tab(text: 'Populer'),
+            Tab(text: 'Lifestyle'),
+            Tab(text: 'Komentar'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [
+          TerupdateTab(), // Konten Tab Utama (Terupdate)
+          RekomendasiPage(), // Konten Tab Rekomendasi
+          PopulerPage(), // Konten Tab Populer
+          LifestylePage(), // Konten Tab Lifestyle
+          KomentarPage(), // Konten Tab Komentar
+        ],
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// KONTEN TAB UTAMA (TERUPDATE)
+// -----------------------------------------------------------------------------
+class TerupdateTab extends StatefulWidget {
+  const TerupdateTab({super.key});
+
+  @override
+  State<TerupdateTab> createState() => _TerupdateTabState();
+}
+
+class _TerupdateTabState extends State<TerupdateTab> {
   final List<StoryModel> _allStories = [
     StoryModel(
       title: 'Bukan Cuma Modal Sabar, Mancing Juga Butuh Strategi!',
@@ -137,31 +244,56 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(56),
-        child: CustomAppBar(),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _getRandomStories,
-        color: Colors.blue,
-        backgroundColor: const Color(0xFF262A30),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const CategoryTabBar(),
-              const HashtagBanner(),
-              const SizedBox(height: 12),
-              StoriesSection(stories: _displayedStories),
-              const SizedBox(height: 16),
-              const FeaturedVideoCard(),
-              const SizedBox(height: 16),
-              const NewsListItem(),
-              const SizedBox(height: 20),
-            ],
-          ),
+    return RefreshIndicator(
+      onRefresh: _getRandomStories,
+      color: Colors.blue,
+      backgroundColor: const Color(0xFF262A30),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const HashtagBanner(),
+            const SizedBox(height: 12),
+            StoriesSection(stories: _displayedStories),
+            const SizedBox(height: 16),
+
+            // BERITA HIGHLIGHT UTAMA (DENGAN GAMBAR URL GOOGLE/INTERNET)
+            const FeaturedVideoCard(
+              imageUrl: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop",
+              title: "Video: Lihat Lagi Alasan MSCI Buka Peluang Turunkan Kasta Pasar Saham RI",
+              category: "detikFinance",
+            ),
+            const SizedBox(height: 20),
+
+            // BERITA DAFTAR BAWAH 1
+            const NewsListItem(
+              title: "Trump Gunakan Nama 'Mohammad' untuk Jadi Bahan Candaan",
+              category: "detikNews",
+              time: "47 menit lalu",
+              imageUrl: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?q=80&w=300&auto=format&fit=crop",
+            ),
+            const Divider(color: Colors.white10, height: 28),
+
+            // BERITA DAFTAR BAWAH 2
+            const NewsListItem(
+              title: "Pemerintah Berencana Naikkan Subsidikan Listrik Rumah Tangga",
+              category: "detikFinance",
+              time: "1 jam lalu",
+              imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=300&auto=format&fit=crop",
+            ),
+            const Divider(color: Colors.white10, height: 28),
+
+            // BERITA DAFTAR BAWAH 3
+            const NewsListItem(
+              title: "Hasil Laga Uji Coba: Timnas Indonesia Imbang Lawan Negara Eropa",
+              category: "detikSport",
+              time: "2 jam lalu",
+              imageUrl: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=300&auto=format&fit=crop",
+            ),
+
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
@@ -169,54 +301,109 @@ class _HomePageState extends State<HomePage> {
 }
 
 // -----------------------------------------------------------------------------
-// WIDGET KHUSUS GENERATE THUMBNAIL LOKAL DARI VIDEO MP4
+// WIDGET KHUSUS NETWORK IMAGE
 // -----------------------------------------------------------------------------
-class VideoThumbnailWidget extends StatelessWidget {
-  final String videoPath;
+class NetworkImageWidget extends StatelessWidget {
+  final String imageUrl;
 
-  const VideoThumbnailWidget({super.key, required this.videoPath});
-
-  Future<Uint8List?> _generateThumbnail() async {
-    final String fullAssetPath = 'assets/$videoPath';
-    final XFile thumbnailXFile = await VideoThumbnail.thumbnailFile(
-      video: fullAssetPath,
-      imageFormat: ImageFormat.JPEG,
-      maxWidth: 250,
-      quality: 75,
-    );
-    return await thumbnailXFile.readAsBytes();
-  }
+  const NetworkImageWidget({super.key, required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Uint8List?>(
-      future: _generateThumbnail(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.hasData &&
-            snapshot.data != null) {
-          return Image.memory(
-            snapshot.data!,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-          );
-        }
-        // Tampilan loading sementara saat thumbnail sedang di-generate
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
         return Container(
-          color: const Color(0xFF1B1E23),
+          color: const Color(0xFF262A30),
           child: const Center(
             child: SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.grey,
+                color: Colors.white24,
               ),
             ),
           ),
         );
       },
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: const Color(0xFF262A30),
+          child: const Center(
+            child: Icon(Icons.broken_image, color: Colors.grey, size: 30),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// WIDGET KHUSUS THUMBNAIL VIDEO UNTUK STORIES ATAS
+// -----------------------------------------------------------------------------
+class VideoThumbnailWidget extends StatefulWidget {
+  final String videoPath;
+
+  const VideoThumbnailWidget({super.key, required this.videoPath});
+
+  @override
+  State<VideoThumbnailWidget> createState() => _VideoThumbnailWidgetState();
+}
+
+class _VideoThumbnailWidgetState extends State<VideoThumbnailWidget> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.asset(widget.videoPath)
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _isInitialized = true;
+          });
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isInitialized) {
+      return FittedBox(
+        fit: BoxFit.cover,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: _controller.value.size.width,
+          height: _controller.value.size.height,
+          child: VideoPlayer(_controller),
+        ),
+      );
+    }
+
+    return Container(
+      color: const Color(0xFF1B1E23),
+      child: const Center(
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white24,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -267,10 +454,7 @@ class StoriesSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: Stack(
                   children: [
-                    // 1. Thumbnail otomatis dari file video MP4
                     VideoThumbnailWidget(videoPath: story.videoPath),
-
-                    // 2. Overlay gradient hitam transparan
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -283,8 +467,6 @@ class StoriesSection extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // 3. Icon Play di sudut kanan atas
                     const Positioned(
                       top: 8,
                       right: 8,
@@ -294,8 +476,6 @@ class StoriesSection extends StatelessWidget {
                         size: 20,
                       ),
                     ),
-
-                    // 4. Judul video di bagian bawah
                     Positioned(
                       bottom: 10,
                       left: 8,
@@ -323,114 +503,8 @@ class StoriesSection extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// WIDGET-WIDGET TAMPILAN LAINNYA
+// WIDGET PENDUKUNG LAINNYA
 // -----------------------------------------------------------------------------
-class CustomAppBar extends StatelessWidget {
-  const CustomAppBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.cast_connected_outlined,
-                color: Colors.white,
-                size: 26,
-              ),
-              onPressed: () {},
-            ),
-            RichText(
-              text: const TextSpan(
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                children: [
-                  TextSpan(
-                    text: 'menit',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  TextSpan(
-                    text: 'com',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ],
-              ),
-            ),
-            const CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.white30,
-              child: Icon(Icons.person, color: Colors.white70),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class CategoryTabBar extends StatefulWidget {
-  const CategoryTabBar({super.key});
-
-  @override
-  State<CategoryTabBar> createState() => _CategoryTabBarState();
-}
-
-class _CategoryTabBarState extends State<CategoryTabBar> {
-  int selectedCategory = 0;
-  final List<String> categories = [
-    'Terupdate',
-    'Rekomendasi',
-    'Populer',
-    'Lifestyle',
-    'Komentar',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 45,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final isSelected = selectedCategory == index;
-          return GestureDetector(
-            onTap: () => setState(() => selectedCategory = index),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    categories[index],
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.grey[400],
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    height: 3,
-                    width: 30,
-                    color: isSelected ? Colors.white : Colors.transparent,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
 class HashtagBanner extends StatelessWidget {
   const HashtagBanner({super.key});
 
@@ -453,7 +527,16 @@ class HashtagBanner extends StatelessWidget {
 }
 
 class FeaturedVideoCard extends StatelessWidget {
-  const FeaturedVideoCard({super.key});
+  final String imageUrl;
+  final String title;
+  final String category;
+
+  const FeaturedVideoCard({
+    super.key,
+    required this.imageUrl,
+    required this.title,
+    required this.category,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -471,9 +554,7 @@ class FeaturedVideoCard extends StatelessWidget {
                   SizedBox(
                     height: 200,
                     width: double.infinity,
-                    child: const VideoThumbnailWidget(
-                      videoPath: 'videos/video1.mp4',
-                    ),
+                    child: NetworkImageWidget(imageUrl: imageUrl),
                   ),
                   Positioned(
                     top: 12,
@@ -513,20 +594,23 @@ class FeaturedVideoCard extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
-                      'Video: Lihat Lagi Alasan MSCI Buka Peluang Turunkan Kasta Pasar Saham RI',
-                      style: TextStyle(
+                      title,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         height: 1.3,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      'detikFinance',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                      category,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -540,12 +624,23 @@ class FeaturedVideoCard extends StatelessWidget {
 }
 
 class NewsListItem extends StatelessWidget {
-  const NewsListItem({super.key});
+  final String title;
+  final String category;
+  final String time;
+  final String imageUrl;
+
+  const NewsListItem({
+    super.key,
+    required this.title,
+    required this.category,
+    required this.time,
+    required this.imageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -553,40 +648,40 @@ class NewsListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Trump Gunakan Nama 'Mohammad' untuk Jadi Bahan Candaan",
-                  style: TextStyle(
+                Text(
+                  title,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    height: 1.3,
+                    height: 1.35,
                   ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
                 Row(
-                  children: const [
+                  children: [
                     Text(
-                      'detikNews',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      category,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     Text(
-                      ' • 47 menit lalu',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ' • $time',
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: SizedBox(
               width: 90,
-              height: 65,
-              child: const VideoThumbnailWidget(videoPath: 'videos/video2.mp4'),
+              height: 75,
+              child: NetworkImageWidget(imageUrl: imageUrl),
             ),
           ),
         ],
