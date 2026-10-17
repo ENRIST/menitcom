@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // Import halaman utama dan navbar dari folder pages
 import 'pages/home_page.dart';
 import 'pages/nav_bar.dart';
+import 'pages/category/category_page.dart';
 
 // import "routes.dart";
 
@@ -54,9 +55,7 @@ class _MainPageState extends State<MainPage> {
     const Center(
       child: Text('Halaman Milidetik', style: TextStyle(color: Colors.white)),
     ),
-    const Center(
-      child: Text('Halaman Category', style: TextStyle(color: Colors.white)),
-    ),
+    const CategoryPage(),
     const Center(
       child: Text('Halaman Video', style: TextStyle(color: Colors.white)),
     ),
