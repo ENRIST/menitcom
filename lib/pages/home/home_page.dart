@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-// Import halaman-halaman tab lainnya
+// Import Service & Model
+import '../../api_service.dart';
+import '../../models/news_model.dart';
+
+// Import halaman-halaman tab & detail berita
 import 'rekomendasi_page.dart';
 import 'populer_page.dart';
 import 'lifestyle_page.dart';
 import 'komentar_page.dart';
 import 'story_detail_page.dart';
+import 'news_detail_page.dart'; // Mengimpor Halaman Detail Berita
 
 class StoryModel {
   final String title;
@@ -124,7 +129,7 @@ class _HomePageState extends State<HomePage>
 }
 
 // -----------------------------------------------------------------------------
-// KONTEN TAB UTAMA (TERUPDATE)
+// KONTEN TAB UTAMA (TERUPDATE) - TERINTEGRASI BACKEND NODE.JS & DATABASE MYSQL
 // -----------------------------------------------------------------------------
 class TerupdateTab extends StatefulWidget {
   const TerupdateTab({super.key});
@@ -134,6 +139,8 @@ class TerupdateTab extends StatefulWidget {
 }
 
 class _TerupdateTabState extends State<TerupdateTab> {
+  late Future<List<NewsModel>> futureNews;
+
   final List<StoryModel> _allStories = [
     StoryModel(
       title: 'Bukan Cuma Modal Sabar, Mancing Juga Butuh Strategi!',
@@ -165,66 +172,6 @@ class _TerupdateTabState extends State<TerupdateTab> {
       videoPath: 'videos/video6.mp4',
       time: '4 jam lalu',
     ),
-    StoryModel(
-      title: 'Teknologi AI Terbaru Yang Mengubah Dunia Kerja',
-      videoPath: 'videos/video7.mp4',
-      time: '5 jam lalu',
-    ),
-    StoryModel(
-      title: 'Resep Praktis Sarapan Sehat Hanya 5 Menit',
-      videoPath: 'videos/video8.mp4',
-      time: '6 jam lalu',
-    ),
-    StoryModel(
-      title: 'Olahraga Ringan di Rumah untuk Membakar Kalori',
-      videoPath: 'videos/video9.mp4',
-      time: '7 jam lalu',
-    ),
-    StoryModel(
-      title: 'Review Gadget Terbaru dengan Performa Terbaik',
-      videoPath: 'videos/video10.mp4',
-      time: '8 jam lalu',
-    ),
-    StoryModel(
-      title: 'Kisah Inspiratif Pengusaha Muda Sukses di Indonesia',
-      videoPath: 'videos/video11.mp4',
-      time: '9 jam lalu',
-    ),
-    StoryModel(
-      title: 'Tips Memilih Sepatu Lari yang Nyaman',
-      videoPath: 'videos/video12.mp4',
-      time: '10 jam lalu',
-    ),
-    StoryModel(
-      title: 'Seni Fotografi Ponsel: Bikin Foto Selevel Kamera Pro',
-      videoPath: 'videos/video13.mp4',
-      time: '11 jam lalu',
-    ),
-    StoryModel(
-      title: 'Keindahan Alam Nusa Penida Bali Yang Menakjubkan',
-      videoPath: 'videos/video14.mp4',
-      time: '12 jam lalu',
-    ),
-    StoryModel(
-      title: 'Panduan Investasi Reksadana untuk Pemula',
-      videoPath: 'videos/video15.mp4',
-      time: '13 jam lalu',
-    ),
-    StoryModel(
-      title: 'Perkembangan Otomotif Listrik Masa Depan',
-      videoPath: 'videos/video16.mp4',
-      time: '14 jam lalu',
-    ),
-    StoryModel(
-      title: 'Manfaat Minum Air Putih Cukup Setiap Hari',
-      videoPath: 'videos/video17.mp4',
-      time: '15 jam lalu',
-    ),
-    StoryModel(
-      title: 'Trik Produktif Bekerja dari Rumah Tanpa Stress',
-      videoPath: 'videos/video18.mp4',
-      time: '16 jam lalu',
-    ),
   ];
 
   List<StoryModel> _displayedStories = [];
@@ -233,6 +180,7 @@ class _TerupdateTabState extends State<TerupdateTab> {
   void initState() {
     super.initState();
     _getRandomStories();
+    futureNews = ApiService.fetchNews(); // Memanggil data dari API Node.js
   }
 
   Future<void> _getRandomStories() async {
@@ -245,56 +193,99 @@ class _TerupdateTabState extends State<TerupdateTab> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: _getRandomStories,
+      onRefresh: () async {
+        await _getRandomStories();
+        setState(() {
+          futureNews =
+              ApiService.fetchNews(); // Refresh data dari backend Node.js
+        });
+      },
       color: Colors.blue,
       backgroundColor: const Color(0xFF262A30),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const HashtagBanner(),
-            const SizedBox(height: 12),
-            StoriesSection(stories: _displayedStories),
-            const SizedBox(height: 16),
+      child: FutureBuilder<List<NewsModel>>(
+        future: futureNews,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40.0),
+                child: CircularProgressIndicator(color: Colors.blue),
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  'Gagal terhubung ke Server Node.js:\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                ),
+              ),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40.0),
+                child: Text(
+                  'Belum ada berita tersedia di database.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            );
+          }
 
-            // BERITA HIGHLIGHT UTAMA (DENGAN GAMBAR URL GOOGLE/INTERNET)
-            const FeaturedVideoCard(
-              imageUrl: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop",
-              title: "Video: Lihat Lagi Alasan MSCI Buka Peluang Turunkan Kasta Pasar Saham RI",
-              category: "detikFinance",
+          final newsList = snapshot.data!;
+
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const HashtagBanner(),
+                const SizedBox(height: 12),
+                StoriesSection(stories: _displayedStories),
+                const SizedBox(height: 16),
+
+                // BERITA HIGHLIGHT UTAMA (DARI DATABASE INDEX 0)
+                if (newsList.isNotEmpty)
+                  FeaturedVideoCard(
+                    newsId:
+                        newsList[0].newsId, // Mengirim news_id untuk navigasi
+                    imageUrl: newsList[0].imageUrl,
+                    title: newsList[0].title,
+                    category: newsList[0].categoryName,
+                  ),
+                const SizedBox(height: 20),
+
+                // DAFTAR BERITA BAWAH (DINAMIS DARI DATABASE INDEX 1 KE ATAS)
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: newsList.length > 1 ? newsList.length - 1 : 0,
+                  itemBuilder: (context, index) {
+                    final news = newsList[index + 1];
+                    return Column(
+                      children: [
+                        NewsListItem(
+                          newsId:
+                              news.newsId, // Mengirim news_id untuk navigasi
+                          title: news.title,
+                          category: news.categoryName,
+                          time: news.publishedAt,
+                          imageUrl: news.imageUrl,
+                        ),
+                        const Divider(color: Colors.white10, height: 28),
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 20),
+              ],
             ),
-            const SizedBox(height: 20),
-
-            // BERITA DAFTAR BAWAH 1
-            const NewsListItem(
-              title: "Trump Gunakan Nama 'Mohammad' untuk Jadi Bahan Candaan",
-              category: "detikNews",
-              time: "47 menit lalu",
-              imageUrl: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?q=80&w=300&auto=format&fit=crop",
-            ),
-            const Divider(color: Colors.white10, height: 28),
-
-            // BERITA DAFTAR BAWAH 2
-            const NewsListItem(
-              title: "Pemerintah Berencana Naikkan Subsidikan Listrik Rumah Tangga",
-              category: "detikFinance",
-              time: "1 jam lalu",
-              imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=300&auto=format&fit=crop",
-            ),
-            const Divider(color: Colors.white10, height: 28),
-
-            // BERITA DAFTAR BAWAH 3
-            const NewsListItem(
-              title: "Hasil Laga Uji Coba: Timnas Indonesia Imbang Lawan Negara Eropa",
-              category: "detikSport",
-              time: "2 jam lalu",
-              imageUrl: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=300&auto=format&fit=crop",
-            ),
-
-            const SizedBox(height: 20),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -459,7 +450,7 @@ class StoriesSection extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.black.withOpacity(0.8),
+                            Colors.black.withValues(alpha: 0.8),
                             Colors.transparent,
                           ],
                           begin: Alignment.bottomCenter,
@@ -526,13 +517,16 @@ class HashtagBanner extends StatelessWidget {
   }
 }
 
+// WIDGET BERITA UTAMA DENGAN DUKUNGAN KLIK NAVIGASI KE DETAIL
 class FeaturedVideoCard extends StatelessWidget {
+  final int newsId;
   final String imageUrl;
   final String title;
   final String category;
 
   const FeaturedVideoCard({
     super.key,
+    required this.newsId,
     required this.imageUrl,
     required this.title,
     required this.category,
@@ -540,82 +534,92 @@ class FeaturedVideoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          color: const Color(0xFF262A30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  SizedBox(
-                    height: 200,
-                    width: double.infinity,
-                    child: NetworkImageWidget(imageUrl: imageUrl),
-                  ),
-                  Positioned(
-                    top: 12,
-                    left: 12,
-                    child: CircleAvatar(
-                      backgroundColor: Colors.black.withOpacity(0.5),
-                      radius: 16,
-                      child: const Icon(
-                        Icons.volume_off,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: LinearProgressIndicator(
-                      value: 0.3,
-                      backgroundColor: Colors.grey.withOpacity(0.5),
-                      color: Colors.white,
-                      minHeight: 3,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF1E5BB1), Color(0xFF163E78)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NewsDetailPage(newsId: newsId),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            color: const Color(0xFF262A30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        height: 1.3,
+                    SizedBox(
+                      height: 200,
+                      width: double.infinity,
+                      child: NetworkImageWidget(imageUrl: imageUrl),
+                    ),
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: CircleAvatar(
+                        backgroundColor: Colors.black.withValues(alpha: 0.5),
+                        radius: 16,
+                        child: const Icon(
+                          Icons.volume_off,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      category,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: LinearProgressIndicator(
+                        value: 0.3,
+                        backgroundColor: Colors.grey.withValues(alpha: 0.5),
+                        color: Colors.white,
+                        minHeight: 3,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF1E5BB1), Color(0xFF163E78)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        category,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -623,7 +627,9 @@ class FeaturedVideoCard extends StatelessWidget {
   }
 }
 
+// WIDGET ITEM LIST BERITA DENGAN DUKUNGAN KLIK NAVIGASI KE DETAIL
 class NewsListItem extends StatelessWidget {
+  final int newsId;
   final String title;
   final String category;
   final String time;
@@ -631,6 +637,7 @@ class NewsListItem extends StatelessWidget {
 
   const NewsListItem({
     super.key,
+    required this.newsId,
     required this.title,
     required this.category,
     required this.time,
@@ -639,52 +646,68 @@ class NewsListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NewsDetailPage(newsId: newsId),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      category,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    Text(
-                      ' • $time',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        category,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        ' • $time',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: SizedBox(
-              width: 90,
-              height: 75,
-              child: NetworkImageWidget(imageUrl: imageUrl),
+            const SizedBox(width: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 90,
+                height: 75,
+                child: NetworkImageWidget(imageUrl: imageUrl),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

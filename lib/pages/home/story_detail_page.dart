@@ -68,10 +68,10 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.5),
+                    Colors.black.withValues(alpha: 0.5),
                     Colors.transparent,
                     Colors.transparent,
-                    Colors.black.withOpacity(0.85),
+                    Colors.black.withValues(alpha: 0.85),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -115,7 +115,7 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
