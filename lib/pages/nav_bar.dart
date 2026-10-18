@@ -26,7 +26,10 @@ class CustomBottomNavBar extends StatelessWidget {
           icon: Icon(Icons.donut_large_rounded),
           label: 'Home',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Explore'),
+       BottomNavigationBarItem(
+          icon: Icon(Icons.search),
+          label: 'Explore',
+        ),
         BottomNavigationBarItem(
           icon: Icon(Icons.auto_awesome),
           label: 'Milidetik',
