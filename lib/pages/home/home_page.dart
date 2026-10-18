@@ -11,7 +11,10 @@ import 'populer_page.dart';
 import 'lifestyle_page.dart';
 import 'komentar_page.dart';
 import 'story_detail_page.dart';
-import 'news_detail_page.dart'; // Mengimpor Halaman Detail Berita
+import 'news_detail_page.dart';
+
+// Import Halaman Profil Sebelum Login
+import '../profile_sebelum_login.dart';
 
 class StoryModel {
   final String title;
@@ -81,10 +84,21 @@ class _HomePageState extends State<HomePage>
                 ],
               ),
             ),
-            const CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.white30,
-              child: Icon(Icons.person, color: Colors.white70, size: 20),
+            // ICON PROFIL DIARAHKAN KE PROFIL SEBELUM LOGIN
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfilSebelumLogin(),
+                  ),
+                );
+              },
+              child: const CircleAvatar(
+                radius: 18,
+                backgroundColor: Colors.white30,
+                child: Icon(Icons.person, color: Colors.white70, size: 20),
+              ),
             ),
           ],
         ),
@@ -235,7 +249,6 @@ class _TerupdateTabState extends State<TerupdateTab> {
             );
           }
 
-          // Buat salinan data agar tidak mengubah data asli snapshot
           final rawNewsList = List<NewsModel>.from(snapshot.data!);
 
           // 1. Ambil 1 berita pertama untuk Highlight Utama
