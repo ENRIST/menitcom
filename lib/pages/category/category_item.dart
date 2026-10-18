@@ -95,7 +95,7 @@ class CategoryIcon extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => _buildFallback(),
+        errorBuilder: (_, _, _) => _buildFallback(),
       );
     }
     return _buildFallback();

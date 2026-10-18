@@ -1,10 +1,34 @@
 import 'package:flutter/material.dart';
 
-class KomentarPage extends StatelessWidget {
+// Import Service & Model
+import '../../api_service.dart';
+import '../../models/news_model.dart';
+
+// Import Halaman Detail Berita
+import 'news_detail_page.dart';
+
+class KomentarPage extends StatefulWidget {
   const KomentarPage({super.key});
 
+  @override
+  State<KomentarPage> createState() => _KomentarPageState();
+}
+
+class _KomentarPageState extends State<KomentarPage> {
+  late Future<List<NewsModel>> futureNews;
+
+  @override
+  void initState() {
+    super.initState();
+    futureNews =
+        ApiService.fetchNews(); // Memanggil data dari API Node.js[cite: 3]
+  }
+
   // Fungsi untuk menampilkan Bottom Sheet daftar artikel ramai dikomentari
-  void _showArtikelLainBottomSheet(BuildContext context) {
+  void _showArtikelLainBottomSheet(
+    BuildContext context,
+    List<NewsModel> newsList,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E2127),
@@ -66,38 +90,32 @@ class KomentarPage extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Divider(color: Colors.white10, height: 1),
 
-                // DAFTAR ARTIKEL LAIN (2 s/d 8)
+                // DAFTAR ARTIKEL LAIN DINAMIS DARI DATABASE (INDEX 1 KE ATAS)
                 Expanded(
-                  child: ListView(
+                  child: ListView.builder(
                     controller: scrollController,
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    children: [
-                      _buildBottomArticleItem(
-                        '2',
-                        'Israel Tolak Pilot WNI Mendarat, Kemlu RI Bereaksi',
-                      ),
-                      _buildBottomArticleItem(
-                        '3',
-                        'Eks Ketua KPU Sindir Doli-Arsul soal PKPU 19/2023: Lupa Boleh, Munafik Jangan',
-                      ),
-                      _buildBottomArticleItem(
-                        '4',
-                        'Pengumuman! Warga RI Bakal Dapat HP Gratis, Ini Bocorannya',
-                      ),
-                      _buildBottomArticleItem(
-                        '5',
-                        'Andi Arief: Yang Butuh Pansus DPR itu Gibran',
-                      ),
-                      _buildBottomArticleItem(
-                        '6',
-                        'Bos Bursa soal Pengumuman MSCI: Standalone Market Bukan Kasta Terendah!',
-                      ),
-                      _buildBottomArticleItem(
-                        '7',
-                        "Perbandingan Dulu dan Kini Ucapan Jokowi soal 'Prabowo Gibran 2 Periode'",
-                      ),
-                      _buildBottomArticleItem('8', 'Indonesia Kena Prank MSCI'),
-                    ],
+                    itemCount: newsList.length > 1 ? newsList.length - 1 : 0,
+                    itemBuilder: (context, index) {
+                      final news = newsList[index + 1];
+                      final nomorUrut = (index + 2)
+                          .toString(); // Mulai dari nomor 2
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context); // Tutup bottom sheet dulu
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NewsDetailPage(
+                                newsId: news.newsId,
+                              ), // [cite: 3]
+                            ),
+                          );
+                        },
+                        child: _buildBottomArticleItem(nomorUrut, news.title),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -149,216 +167,281 @@ class KomentarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 80),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // HASHTAG BANNER
-              Container(
-                width: double.infinity,
-                color: const Color(0xFF262A30),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: const Text(
-                  '#DPD RI Awards',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() {
+          futureNews =
+              ApiService.fetchNews(); // Refresh data dari backend[cite: 3]
+        });
+      },
+      color: Colors.blue,
+      backgroundColor: const Color(0xFF262A30),
+      child: FutureBuilder<List<NewsModel>>(
+        future: futureNews,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40.0),
+                child: CircularProgressIndicator(color: Colors.blue),
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  'Gagal terhubung ke Server Node.js:\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 13),
                 ),
               ),
-              const SizedBox(height: 16),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40.0),
+                child: Text(
+                  'Belum ada data komentar berita di database.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            );
+          }
 
-              // HEADER BERITA UTAMA & TOMBOL LIHAT KOMENTAR
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+          final newsList = snapshot.data!;
+          final featuredNews = newsList[0]; // Berita utama urutan nomor 1
+
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 80),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 28,
-                          child: Text(
-                            '1',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                    // HASHTAG BANNER[cite: 7]
+                    Container(
+                      width: double.infinity,
+                      color: const Color(0xFF262A30),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      child: const Text(
+                        '#DPD RI Awards',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                "MUI Soroti Rekam Jejak Andrea Bocelli, Desak Konser di Indonesia Dibatalkan",
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // HEADER BERITA UTAMA & TOMBOL LIHAT KOMENTAR
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NewsDetailPage(
+                              newsId: featuredNews.newsId,
+                            ), // [cite: 3]
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 28,
+                                  child: Text(
+                                    '1',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        featuredNews.title,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          height: 1.35,
+                                        ),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        '${featuredNews.categoryName} · ${featuredNews.publishedAt}',
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: SizedBox(
+                                    width: 80,
+                                    height: 70,
+                                    child: NetworkImageWidget(
+                                      imageUrl: featuredNews.imageUrl,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            Padding(
+                              padding: const EdgeInsets.only(left: 36),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF383C44),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'Lihat 221 komentar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+                    const Divider(color: Colors.white10, height: 1),
+                    const SizedBox(height: 16),
+
+                    // TIMELINE KOMENTAR
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          _buildCommentTimelineItem(
+                            username: "BocorAlueseeee",
+                            time: "3 Jam yang lalu",
+                            content: "Yg penting cabulers2 di pesantren gak di pesantren gak dilarang sm MUI...",
+                            avatarWidget: const CircleAvatar(
+                              radius: 20,
+                              backgroundImage: NetworkImage(
+                                "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=200&auto=format&fit=crop",
+                              ),
+                            ),
+                            isLast: false,
+                          ),
+                          _buildCommentTimelineItem(
+                            username: "Zackih",
+                            time: "6 Jam yang lalu",
+                            content: "Andrea setiap konser menggalang dana untuk IDF Israel yg telah membunuh warga Palestina.. Anda paham???",
+                            avatarWidget: const CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Colors.red,
+                              child: Text(
+                                'Z',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  height: 1.35,
-                                ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: 6),
-                              Text(
-                                'detikHikmah · 10 Oktober 2026',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
+                                  fontSize: 18,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: const SizedBox(
-                            width: 80,
-                            height: 70,
-                            child: NetworkImageWidget(
-                              imageUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300&auto=format&fit=crop",
                             ),
+                            isLast: false,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    Padding(
-                      padding: const EdgeInsets.only(left: 36),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF383C44),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'Lihat 221 komentar',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                          _buildCommentTimelineItem(
+                            username: "Darma Putra",
+                            time: "6 Jam yang lalu",
+                            content: "Andrea Bocelli musisi yg menginspirasi dunia. Cacat fisik tidak menjadi batasan untuk menyerah. bahkan terus berjuang menjadi musisi top dunia...",
+                            avatarWidget: const CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Color(0xFFE65100),
+                              child: Text(
+                                'DP',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            isLast: true,
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white10, height: 1),
-              const SizedBox(height: 16),
-
-              // TIMELINE KOMENTAR
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    _buildCommentTimelineItem(
-                      username: "BocorAlueseeee",
-                      time: "3 Jam yang lalu",
-                      content: "Yg penting cabulers2 di pesantren gak di pesantren gak dilarang sm MUI...",
-                      avatarWidget: const CircleAvatar(
-                        radius: 20,
-                        backgroundImage: NetworkImage(
-                          "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=200&auto=format&fit=crop",
-                        ),
-                      ),
-                      isLast: false,
+              // FLOATING BAR DI BAGIAN BAWAH
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () => _showArtikelLainBottomSheet(context, newsList),
+                  child: Container(
+                    color: const Color(0xFF1E2127),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
                     ),
-                    _buildCommentTimelineItem(
-                      username: "Zackih",
-                      time: "6 Jam yang lalu",
-                      content: "Andrea setiap konser menggalang dana untuk IDF Israel yg telah membunuh warga Palestina.. Anda paham???",
-                      avatarWidget: const CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.red,
-                        child: Text(
-                          'Z',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-                      isLast: false,
-                    ),
-                    _buildCommentTimelineItem(
-                      username: "Darma Putra",
-                      time: "6 Jam yang lalu",
-                      content: "Andrea Bocelli musisi yg menginspirasi dunia. Cacat fisik tidak menjadi batasan untuk menyerah. bahkan terus berjuang menjadi musisi top dunia...",
-                      avatarWidget: const CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Color(0xFFE65100),
-                        child: Text(
-                          'DP',
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          'Artikel lain yang ramai dikomentari',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                         ),
-                      ),
-                      isLast: true,
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
-          ),
-        ),
-
-        // FLOATING BAR DI BAGIAN BAWAH
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () => _showArtikelLainBottomSheet(context),
-            child: Container(
-              color: const Color(0xFF1E2127),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    'Artikel lain yang ramai dikomentari',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(
-                    Icons.keyboard_arrow_down, // Menggunakan panah bawah sesuai kondisi panel terbuka
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 

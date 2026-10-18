@@ -235,7 +235,15 @@ class _TerupdateTabState extends State<TerupdateTab> {
             );
           }
 
-          final newsList = snapshot.data!;
+          // Buat salinan data agar tidak mengubah data asli snapshot
+          final rawNewsList = List<NewsModel>.from(snapshot.data!);
+
+          // 1. Ambil 1 berita pertama untuk Highlight Utama
+          final featuredNews = rawNewsList[0];
+
+          // 2. Sisa berita diacak (shuffle) lalu diambil maksimal 4 berita saja
+          final remainingNews = rawNewsList.skip(1).toList()..shuffle();
+          final displayedNewsList = remainingNews.take(4).toList();
 
           return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -247,29 +255,26 @@ class _TerupdateTabState extends State<TerupdateTab> {
                 StoriesSection(stories: _displayedStories),
                 const SizedBox(height: 16),
 
-                // BERITA HIGHLIGHT UTAMA (DARI DATABASE INDEX 0)
-                if (newsList.isNotEmpty)
-                  FeaturedVideoCard(
-                    newsId:
-                        newsList[0].newsId, // Mengirim news_id untuk navigasi
-                    imageUrl: newsList[0].imageUrl,
-                    title: newsList[0].title,
-                    category: newsList[0].categoryName,
-                  ),
+                // BERITA HIGHLIGHT UTAMA (INDEX 0)
+                FeaturedVideoCard(
+                  newsId: featuredNews.newsId,
+                  imageUrl: featuredNews.imageUrl,
+                  title: featuredNews.title,
+                  category: featuredNews.categoryName,
+                ),
                 const SizedBox(height: 20),
 
-                // DAFTAR BERITA BAWAH (DINAMIS DARI DATABASE INDEX 1 KE ATAS)
+                // DAFTAR BERITA BAWAH (ACAK MAKSIMAL 4 BERITA)
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: newsList.length > 1 ? newsList.length - 1 : 0,
+                  itemCount: displayedNewsList.length,
                   itemBuilder: (context, index) {
-                    final news = newsList[index + 1];
+                    final news = displayedNewsList[index];
                     return Column(
                       children: [
                         NewsListItem(
-                          newsId:
-                              news.newsId, // Mengirim news_id untuk navigasi
+                          newsId: news.newsId,
                           title: news.title,
                           category: news.categoryName,
                           time: news.publishedAt,

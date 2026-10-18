@@ -150,7 +150,7 @@ class _CategoryNewsPageState extends State<CategoryNewsPage> {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: _buildListNews(news),
                   );
-                }).toList(),
+                }),
               ],
             );
           },
