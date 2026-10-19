@@ -71,7 +71,9 @@ class _ExplorePageState extends State<ExplorePage> {
     setState(() => _future = _load());
     try {
       await _future;
-    } catch (_) {/* error ditampilkan oleh FutureBuilder */}
+    } catch (_) {
+      /* error ditampilkan oleh FutureBuilder */
+    }
   }
 
   // ----------------------------------------------------------- pencarian
@@ -89,7 +91,10 @@ class _ExplorePageState extends State<ExplorePage> {
       _runSearch('');
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 450), () => _runSearch(value));
+    _debounce = Timer(
+      const Duration(milliseconds: 450),
+      () => _runSearch(value),
+    );
   }
 
   void _clearSearch() {
@@ -100,11 +105,13 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   // ----------------------------------------------------------- navigasi
-  void _openAllEvents() => Navigator.of(context)
-      .push(MaterialPageRoute(builder: (_) => const AllEventsPage()));
+  void _openAllEvents() =>
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const AllEventsPage()));
 
-  void _openAllColumns() => Navigator.of(context)
-      .push(MaterialPageRoute(builder: (_) => const AllColumnsPage()));
+  void _openAllColumns() =>
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const AllColumnsPage()));
 
   // ----------------------------------------------------------- UI
   @override
@@ -155,10 +162,17 @@ class _ExplorePageState extends State<ExplorePage> {
         decoration: InputDecoration(
           hintText: 'Search',
           hintStyle: const TextStyle(color: Color(0xFF7A7A7A), fontSize: 17),
-          prefixIcon: const Icon(Icons.search, size: 28, color: Color(0xFF555555)),
+          prefixIcon: const Icon(
+            Icons.search,
+            size: 28,
+            color: Color(0xFF555555),
+          ),
           suffixIcon: _searchCtrl.text.isEmpty
               ? null
-              : IconButton(icon: const Icon(Icons.close), onPressed: _clearSearch),
+              : IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: _clearSearch,
+                ),
           filled: true,
           fillColor: const Color(0xFFEBEBEB),
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -213,9 +227,11 @@ class _ExplorePageState extends State<ExplorePage> {
           return ErrorBox(onRetry: _refresh);
         }
         final d = snap.data!;
-        final visiblePopular =
-            _showAllPopular ? d.popular : d.popular.take(_popularInitial).toList();
-        final canExpand = !_showAllPopular && d.popular.length > _popularInitial;
+        final visiblePopular = _showAllPopular
+            ? d.popular
+            : d.popular.take(_popularInitial).toList();
+        final canExpand =
+            !_showAllPopular && d.popular.length > _popularInitial;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +245,8 @@ class _ExplorePageState extends State<ExplorePage> {
                 rank: i + 1,
                 onTap: () => widget.onNewsTap?.call(visiblePopular[i]),
               ),
-            if (canExpand) MoreButton(onTap: () => setState(() => _showAllPopular = true)),
+            if (canExpand)
+              MoreButton(onTap: () => setState(() => _showAllPopular = true)),
 
             const SectionGap(),
 
@@ -266,7 +283,9 @@ class _ExplorePageState extends State<ExplorePage> {
               ColumnTile(
                 column: c,
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => ColumnDetailPage(column: c)),
+                  MaterialPageRoute(
+                    builder: (_) => ColumnDetailPage(column: c),
+                  ),
                 ),
               ),
             MoreButton(onTap: _openAllColumns),

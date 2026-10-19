@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-// Import halaman utama dan navbar dari folder pages
+// Import halaman utama, navbar, category, dan explore
 import 'pages/home/home_page.dart';
 import 'pages/nav_bar.dart';
 import 'pages/category/category_page.dart';
+import 'pages/explore/explore_page.dart';
+import 'pages/home/news_detail_page.dart'; // Agar berita di explore bisa diklik ke detail
 
 // import "routes.dart";
 
@@ -19,8 +21,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Menitcom',
       debugShowCheckedModeBanner: false,
-      // initialRoute: AppRoutes.login,
-      // routes: AppRoutes.routes,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(
           0xFF1B1E23,
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: const MainPage(), // <--- Menambahkan home ke MainPage
+      home: const MainPage(),
     );
   }
 }
@@ -46,20 +46,42 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
 
-  // Halaman-halaman yang ditampilkan sesuai tab
-  final List<Widget> _pages = [
-    const HomePage(),
-    const Center(
-      child: Text('Halaman Explore', style: TextStyle(color: Colors.white)),
-    ),
-    const Center(
-      child: Text('Halaman Milidetik', style: TextStyle(color: Colors.white)),
-    ),
-    const CategoryPage(),
-    const Center(
-      child: Text('Halaman Video', style: TextStyle(color: Colors.white)),
-    ),
-  ];
+  // Halaman-halaman yang ditampilkan sesuai tab navbar
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      // Index 0: Home
+      const HomePage(),
+
+      // Index 1: Explore (Terhubung langsung dengan ExplorePage & NewsDetailPage)
+      ExplorePage(
+        onNewsTap: (news) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewsDetailPage(newsId: news.id),
+            ),
+          );
+        },
+      ),
+
+      // Index 2: Milidetik
+      const Center(
+        child: Text('Halaman Milidetik', style: TextStyle(color: Colors.white)),
+      ),
+
+      // Index 3: Category
+      const CategoryPage(),
+
+      // Index 4: Video
+      const Center(
+        child: Text('Halaman Video', style: TextStyle(color: Colors.white)),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
