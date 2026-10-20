@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'profile_setelah_login.dart';
 
 class CompleteProfilePage extends StatefulWidget {
-  const CompleteProfilePage({super.key, this.onFinished});
+  const CompleteProfilePage({super.key, this.onFinished, this.userData});
 
   final VoidCallback? onFinished;
+
+  // Data pengguna yang berhasil login.
+  final Map<String, String>? userData;
 
   @override
   State<CompleteProfilePage> createState() => _CompleteProfilePageState();
@@ -29,13 +32,18 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       return;
     }
 
-    // Data awal pengguna untuk simulasi.
+    // Ambil data asli pengguna, jika tersedia.
     final data = <String, String>{
-      'nama': 'Pengguna Menit',
-      'email': 'pengguna@menit.com',
+      'nama':
+          widget.userData?['nama'] ??
+          widget.userData?['username'] ??
+          'Pengguna Menit',
+      'email': widget.userData?['email'] ?? '',
+      'ponsel':
+          widget.userData?['ponsel'] ?? widget.userData?['phone_number'] ?? '',
     };
 
-    // Tambahkan data yang dipilih pengguna jika menekan SIMPAN.
+    // Tambahkan tanggal lahir dan gender jika pengguna menyimpan.
     if (save) {
       data['lahir'] = birthYear.toString();
 
@@ -44,13 +52,13 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       }
     }
 
-    // Jalankan callback jika halaman dibuka dengan onFinished.
+    // Jalankan callback jika tersedia.
     if (widget.onFinished != null) {
       widget.onFinished!();
       return;
     }
 
-    // Buka profil setelah login dan bersihkan riwayat navigasi.
+    // Kirim data pengguna ke halaman profil.
     masukKeProfil(context, data);
   }
 
