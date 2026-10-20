@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 import 'mpc_logo.dart';
@@ -20,26 +23,64 @@ class _LoginPhonePageState extends State<LoginPhonePage> {
     super.dispose();
   }
 
-  void _continue() {
-    final phone = _phoneController.text.trim();
+  Future<void> _continue() async {
+    String phone = _phoneController.text.trim();
 
-    if (phone.isEmpty || phone.length < 8) {
+    // Hanya mengambil angka dari input nomor HP.
+    phone = phone.replaceAll(RegExp(r'\D'), '');
+
+    // Menyesuaikan format nomor menjadi +62.
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
+    } else if (phone.startsWith('62')) {
+      phone = phone.substring(2);
+    }
+
+    if (phone.length < 8) {
       setState(() {
         _error = 'Masukkan nomor telepon yang valid.';
       });
       return;
     }
 
+    final phoneNumber = '+62$phone';
+
     setState(() {
       _error = null;
     });
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LoginPasswordPage(phoneNumber: '+62 $phone'),
-      ),
-    );
+    try {
+      final response = await http
+          .post(
+            Uri.parse('http://localhost:3000/api/login/check-phone'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'phone_number': phoneNumber}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (!mounted) return;
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['status'] == 'success') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LoginPasswordPage(phoneNumber: phoneNumber),
+          ),
+        );
+      } else {
+        setState(() {
+          _error = data['message'] ?? 'Nomor telepon belum terdaftar.';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = 'Tidak dapat terhubung ke server. Periksa koneksi backend.';
+      });
+    }
   }
 
   @override
