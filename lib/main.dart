@@ -6,6 +6,7 @@ import 'pages/nav_bar.dart';
 import 'pages/category/category_page.dart';
 import 'pages/explore/explore_page.dart';
 import 'pages/home/news_detail_page.dart'; // Agar berita di explore bisa diklik ke detail
+import 'pages/video/video_feed_page.dart';
 
 // import "routes.dart";
 
@@ -77,9 +78,7 @@ class _MainPageState extends State<MainPage> {
       const CategoryPage(),
 
       // Index 4: Video
-      const Center(
-        child: Text('Halaman Video', style: TextStyle(color: Colors.white)),
-      ),
+      const VideoFeedPage(showBottomNavBar: false),
     ];
   }
 
