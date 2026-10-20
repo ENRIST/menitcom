@@ -8,10 +8,12 @@ class WelcomeMpcPage extends StatelessWidget {
     super.key,
     this.onProfileComplete,
     this.onActivateAlloBank,
+    this.userData,
   });
 
   final VoidCallback? onProfileComplete;
   final VoidCallback? onActivateAlloBank;
+  final Map<String, String>? userData;
 
   static const yellow = Color(0xFFFFBD25);
   static const orange = Color(0xFFF2A000);
@@ -21,7 +23,10 @@ class WelcomeMpcPage extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CompleteProfilePage(onFinished: onProfileComplete),
+        builder: (_) => CompleteProfilePage(
+          onFinished: onProfileComplete,
+          userData: userData,
+        ),
       ),
     );
   }
